@@ -59,3 +59,10 @@ def test_parse_date_in_february(date_string: str) -> None:
     assert date.month == 2
     assert date.day == 22
     assert date.year == 2023
+
+
+def test_parse_duration() -> None:
+    assert redo.parse_duration("1_day").days == 1
+    assert redo.parse_duration("7_days").days == 7
+    assert redo.parse_duration("1_week").days == 7
+    assert redo.parse_duration("15_days").days == 15

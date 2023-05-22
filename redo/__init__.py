@@ -36,5 +36,5 @@ def each_task(text: str) -> Iterator[Task]:
             yield Task(task)
 
 
-def parse_date(month_day_year_string: str) -> datetime.date:
+def parse_date(month_day_year_string: str) -> datetime.datetime:
     return datetime.datetime.strptime(month_day_year_string, "%b%d_%Y")
