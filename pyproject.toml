@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "redo"
+version = "0.0.1"
+description="""\
+Utilities to define and work with the ReDO (recurrent TODO) Markdown \
+documents, and script to update ReDO files.\
+"""
+authors = [ 'Dustin Morrill <dmorrill10@gmail.com>' ]
+readme = "README.md"
+
+[tool.poetry.scripts]
+redo = 'redo:run_cli'
+
+[tool.poetry.dependencies]
+python = "^3.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "*"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+addopts = [
+  "--import-mode=importlib",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/dmorrill10/redo"
+"Bug Tracker" = "https://github.com/dmorrill10/redo/issues"
