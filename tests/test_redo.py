@@ -43,3 +43,19 @@ def test_create_two_tasks(task_marker: str) -> None:
     assert not tasks[0].has_been_completed
     assert tasks[0].lines == [first_line, second_line]
     assert tasks[1].lines == [third_line]
+
+
+@pytest.mark.parametrize("date_string", ["may22_2023", "May22_2023"])
+def test_parse_date_in_may(date_string: str) -> None:
+    date = redo.parse_date(date_string)
+    assert date.month == 5
+    assert date.day == 22
+    assert date.year == 2023
+
+
+@pytest.mark.parametrize("date_string", ["feb22_2023", "Feb22_2023"])
+def test_parse_date_in_february(date_string: str) -> None:
+    date = redo.parse_date(date_string)
+    assert date.month == 2
+    assert date.day == 22
+    assert date.year == 2023

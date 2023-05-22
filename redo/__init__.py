@@ -1,3 +1,4 @@
+import datetime
 from typing import Iterator, List
 import re
 
@@ -33,3 +34,7 @@ def each_task(text: str) -> Iterator[Task]:
         task = task.strip()
         if len(task) > 0:
             yield Task(task)
+
+
+def parse_date(month_day_year_string: str) -> datetime.date:
+    return datetime.datetime.strptime(month_day_year_string, "%b%d_%Y")
