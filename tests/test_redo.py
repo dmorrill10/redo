@@ -39,7 +39,6 @@ def test_create_two_tasks(task_marker: str) -> None:
     )
 
     assert len(tasks) == 2
-
     assert not tasks[0].has_been_completed
     assert tasks[0].lines == [first_line, second_line]
     assert tasks[1].lines == [third_line]
@@ -66,3 +65,12 @@ def test_parse_duration() -> None:
     assert redo.parse_duration("7_days").days == 7
     assert redo.parse_duration("1_week").days == 7
     assert redo.parse_duration("2_weeks").days == 14
+
+
+def test_create_task_with_re_and_due_tags() -> None:
+    task = redo.Task("- task +re:1_day +due:mar22_2023")
+    assert not task.has_been_completed
+    assert task.recurs_every is not None
+    assert task.recurs_every.days == 1
+    assert task.due_on is not None
+    assert task.due_on.timetuple()[:3] == (2023, 3, 22)
