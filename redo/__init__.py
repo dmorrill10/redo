@@ -3,12 +3,12 @@ from typing import Iterator, List
 import re
 
 
+TASK_REGEX = re.compile(r"(^|\r|\n|\r\n)[-*]\s*")
+COMPLETION_REGEX = re.compile(r"^[-*]\s*(\[?x\]?)\s")
+
+
 def run_cli() -> None:
     pass
-
-
-task_regex = re.compile(r"(^|\r|\n|\r\n)[-*]\s*")
-completion_regex = re.compile(r"^[-*]\s*(\[?x\]?)\s")
 
 
 class Task:
@@ -18,9 +18,9 @@ class Task:
     def __init__(self, text: str) -> None:
         lines = text.splitlines()
         assert len(lines) > 0
-        match = completion_regex.match(lines[0])
+        match = COMPLETION_REGEX.match(lines[0])
         self.has_been_completed = bool(match and match.group(1))
-        lines[0] = (completion_regex if self.has_been_completed else task_regex).sub(
+        lines[0] = (COMPLETION_REGEX if self.has_been_completed else TASK_REGEX).sub(
             "", lines[0]
         )
         self.lines = lines
@@ -30,7 +30,7 @@ class Task:
 
 
 def each_task(text: str) -> Iterator[Task]:
-    for task in task_regex.split(text):
+    for task in TASK_REGEX.split(text):
         task = task.strip()
         if len(task) > 0:
             yield Task(task)
@@ -38,3 +38,10 @@ def each_task(text: str) -> Iterator[Task]:
 
 def parse_date(month_day_year_string: str) -> datetime.datetime:
     return datetime.datetime.strptime(month_day_year_string, "%b%d_%Y")
+
+
+def parse_duration(duration_string: str) -> datetime.timedelta:
+    amount_str, units = duration_string.strip().split("_")
+    if not units.endswith("s"):
+        units += "s"
+    return datetime.timedelta(**{units.lower(): float(amount_str)})

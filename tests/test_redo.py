@@ -65,4 +65,4 @@ def test_parse_duration() -> None:
     assert redo.parse_duration("1_day").days == 1
     assert redo.parse_duration("7_days").days == 7
     assert redo.parse_duration("1_week").days == 7
-    assert redo.parse_duration("15_days").days == 15
+    assert redo.parse_duration("2_weeks").days == 14
