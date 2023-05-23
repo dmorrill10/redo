@@ -1,9 +1,9 @@
 import datetime
-from typing import Iterator, List, Optional
+from typing import Iterator, List, NamedTuple, Optional
 import re
 
 
-TASK_REGEX = re.compile(r"(^|\r|\n|\r\n)[-*]\s*")
+TASK_REGEX = re.compile(r"(^|\r|\n|\r\n)[-*]\s")
 COMPLETION_REGEX = re.compile(r"^[-*]\s*(\[?x\]?)\s")
 RE_TAG_REGEX = re.compile(r"\+re\:(\S+)")
 DUE_TAG_REGEX = re.compile(r"\+due\:(\S+)")
@@ -59,3 +59,28 @@ def parse_duration(duration_string: str) -> datetime.timedelta:
     if not units.endswith("s"):
         units += "s"
     return datetime.timedelta(**{units.lower(): float(amount_str)})
+
+
+class TextBlock(NamedTuple):
+    text: str
+    is_task: bool
+
+
+def each_text_block(text: str) -> Iterator[TextBlock]:
+    s = ""
+    is_task = False
+    for line in text.splitlines(keepends=True):
+        if TASK_REGEX.match(line):
+            if len(s) > 0:
+                yield TextBlock(s, is_task)
+            s = line
+            is_task = True
+        elif is_task and len(line.strip()) == 0:
+            if len(s) > 0:
+                yield TextBlock(s, is_task)
+            s = line
+            is_task = False
+        else:
+            s += line
+    if len(s) > 0:
+        yield TextBlock(s, is_task)

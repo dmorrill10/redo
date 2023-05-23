@@ -2,7 +2,10 @@ import pytest
 import redo
 
 
-@pytest.mark.parametrize("task_marker", ["-", "- ", "*", "* "])
+TASK_MARKERS = ["- ", "* "]
+
+
+@pytest.mark.parametrize("task_marker", TASK_MARKERS)
 def test_create_task_that_has_not_been_completed(task_marker: str) -> None:
     first_line = "first line of task"
     second_line = "second line of task"
@@ -14,7 +17,7 @@ def test_create_task_that_has_not_been_completed(task_marker: str) -> None:
     assert task_that_has_not_been_completed.lines == [first_line, second_line]
 
 
-@pytest.mark.parametrize("task_marker", ["-", "- ", "*", "* "])
+@pytest.mark.parametrize("task_marker", TASK_MARKERS)
 @pytest.mark.parametrize("completion_marker", ["x ", "[x] "])
 def test_create_completed_task(task_marker: str, completion_marker: str) -> None:
     first_line = "first line of task"
@@ -27,7 +30,7 @@ def test_create_completed_task(task_marker: str, completion_marker: str) -> None
     assert completed_task.lines == [first_line, second_line]
 
 
-@pytest.mark.parametrize("task_marker", ["-", "- ", "*", "* "])
+@pytest.mark.parametrize("task_marker", TASK_MARKERS)
 def test_create_two_tasks(task_marker: str) -> None:
     first_line = "first line of task"
     second_line = "second line of task"
@@ -74,3 +77,43 @@ def test_create_task_with_re_and_due_tags() -> None:
     assert task.recurs_every.days == 1
     assert task.due_on is not None
     assert task.due_on.timetuple()[:3] == (2023, 3, 22)
+
+
+def test_identify_task_text() -> None:
+    text = """
+---
+This is a block comment in a mock markdown file.
+---
+
+# Upcoming
+- task 1
+* task 2
+    additional information
+
+# About
+This text is in the recurrent TODO (reDO) format.
+"""
+    parsed = list(redo.each_text_block(text))
+    assert len(parsed) == 4
+    assert not parsed[0].is_task
+    assert (
+        parsed[0].text
+        == """
+---
+This is a block comment in a mock markdown file.
+---
+
+# Upcoming
+"""
+    )
+    assert parsed[1].text == "- task 1\n"
+    assert parsed[1].is_task
+    assert parsed[2].text == "* task 2\n    additional information\n"
+    assert not parsed[3].is_task
+    assert (
+        parsed[3].text
+        == """
+# About
+This text is in the recurrent TODO (reDO) format.
+"""
+    )
