@@ -1,3 +1,4 @@
+import datetime
 import pytest
 import redo
 
@@ -117,3 +118,42 @@ This is a block comment in a mock markdown file.
 This text is in the recurrent TODO (reDO) format.
 """
     )
+
+
+def test_task_next_recurrence_given_due_date() -> None:
+    task = redo.Task("- [x] +re:1_day +due:may23_2023")
+    next_task = task.recurrence()
+    assert next_task.lines == ["+re:1_day +due:may24_2023"]
+    assert not next_task.has_been_completed
+    assert next_task.recurs_every is not None
+    assert next_task.recurs_every.days == 1
+    assert next_task.due_on is not None
+    assert next_task.due_on.timetuple()[:3] == (2023, 5, 24)
+
+
+def test_task_recurrence_on_uncompleted_task() -> None:
+    task = redo.Task("- +re:1_day +due:may23_2023")
+    next_task = task.recurrence()
+    assert next_task.lines == ["+re:1_day +due:may23_2023"]
+    assert not next_task.has_been_completed
+    assert next_task.recurs_every is not None
+    assert next_task.recurs_every.days == 1
+    assert next_task.due_on is not None
+    assert next_task.due_on.timetuple()[:3] == (2023, 5, 23)
+
+
+def test_task_recurrence_on_uncompleted_task_without_due_date() -> None:
+    task = redo.Task("- +re:1_day")
+    next_task = task.recurrence()
+    assert next_task.lines == ["+re:1_day"]
+    assert not next_task.has_been_completed
+    assert next_task.recurs_every is not None
+    assert next_task.recurs_every.days == 1
+
+
+def test_task_recurrence_on_completed_task_without_due_date() -> None:
+    task = redo.Task("- [x] task +re:1_day")
+    next_task = task.recurrence()
+    assert next_task.lines == []
+    assert not next_task.has_been_completed
+    assert next_task.recurs_every is None
