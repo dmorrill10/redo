@@ -1,5 +1,6 @@
+import argparse
 import datetime
-from typing import Iterator, List, NamedTuple, Optional
+from typing import Iterable, List, NamedTuple, Optional
 import re
 
 
@@ -11,8 +12,38 @@ DUE_TAG_REGEX = re.compile(r"\+due:(\S+)")
 MONTH_DAY_YEAR_DATE_FMT = "%b%d_%Y"
 
 
-def run_cli() -> None:
-    pass
+def update_file(redo_file: str, days_ago_when_tasks_were_completed: int = 1) -> None:
+    with open(redo_file) as f:
+        text = f.read()
+
+    completed_on = datetime.datetime.today() - datetime.timedelta(
+        days=days_ago_when_tasks_were_completed
+    )
+    # TODO: update overdue, due, upcoming sections
+    for text_block in each_text_block(text):
+        if text_block.is_task:
+            task = Task(text_block.text).recurrence(completed_on)
+            if not task.is_empty():
+                print("\n".join(task.lines))
+        else:
+            print(text_block.text)
+
+
+def run_cli():
+    parser = argparse.ArgumentParser(description="Say hi.")
+    parser.add_argument("--redo-file", type=str, help="ReDO file to update.")
+    parser.add_argument(
+        "--days_ago_when_tasks_were_completed",
+        type=int,
+        default=1,
+        help="The number of days ago when tasks were completed.",
+    )
+
+    args = parser.parse_args()
+    update_file(
+        redo_file=args.redo_file,
+        days_ago_when_tasks_were_completed=args.days_ago_when_tasks_were_completed,
+    )
 
 
 class Task:
@@ -64,7 +95,7 @@ class Task:
             return self.copy()
 
 
-def each_task(text: str) -> Iterator[Task]:
+def each_task(text: str) -> Iterable[Task]:
     for task in TASK_REGEX.split(text):
         task = task.strip()
         if len(task) > 0:
@@ -87,7 +118,7 @@ class TextBlock(NamedTuple):
     is_task: bool
 
 
-def each_text_block(text: str) -> Iterator[TextBlock]:
+def each_text_block(text: str) -> Iterable[TextBlock]:
     s = ""
     is_task = False
     for line in text.splitlines(keepends=True):
