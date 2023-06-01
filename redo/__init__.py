@@ -49,11 +49,12 @@ class Task:
     def copy(self) -> "Task":
         return Task("- " + "\n".join(self.lines))
 
-    def recurrence(self) -> "Task":
+    def recurrence(self, current_date: Optional[datetime.datetime] = None) -> "Task":
         if self.has_been_completed:
             if self.due_on is None or self.recurs_every is None:
                 return Task("")
-            next_due = self.due_on + self.recurs_every
+            completion_date = self.due_on if current_date is None else current_date
+            next_due = completion_date + self.recurs_every
             next_due_date_str = DUE_TAG_REGEX.sub(
                 f"+due:{next_due.strftime(MONTH_DAY_YEAR_DATE_FMT).lower()}",
                 "\n".join(self.lines),

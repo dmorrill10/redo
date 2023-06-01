@@ -157,3 +157,14 @@ def test_task_recurrence_on_completed_task_without_due_date() -> None:
     assert next_task.lines == []
     assert not next_task.has_been_completed
     assert next_task.recurs_every is None
+
+
+def test_task_next_recurrence_given_due_date_and_current_date() -> None:
+    task = redo.Task("- [x] +re:1_day +due:may23_2023")
+    next_task = task.recurrence(datetime.datetime(year=2023, month=5, day=25))
+    assert next_task.lines == ["+re:1_day +due:may26_2023"]
+    assert not next_task.has_been_completed
+    assert next_task.recurs_every is not None
+    assert next_task.recurs_every.days == 1
+    assert next_task.due_on is not None
+    assert next_task.due_on.timetuple()[:3] == (2023, 5, 26)
