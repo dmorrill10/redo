@@ -2,6 +2,7 @@ import argparse
 import datetime
 from typing import Iterable, List, NamedTuple, Optional
 import re
+import sys
 
 
 TASK_REGEX = re.compile(r"(^|\r|\n|\r\n)[-*]\s")
@@ -13,10 +14,14 @@ MONTH_DAY_YEAR_DATE_FMT = "%b%d_%Y"
 
 
 def print_next_file(
-    redo_file: str, days_ago_when_tasks_were_completed: int = 1
+    redo_file: str,
+    days_ago_when_tasks_were_completed: int = 1,
+    overwrite: bool = False,
 ) -> None:
     with open(redo_file) as f:
         text = f.read()
+
+    out_file = open(redo_file, mode="w") if overwrite else sys.stdout
 
     today = datetime.datetime.today()
     completed_on = today - datetime.timedelta(days=days_ago_when_tasks_were_completed)
@@ -52,28 +57,31 @@ def print_next_file(
         else:
             for line in text_block.text.splitlines():
                 if len(line) > 0 and line not in set_of_headers:
-                    print(line)
+                    print(line, file=out_file)
 
-    print("")
+    print("", file=out_file)
     if len(overdue_tasks) > 0:
-        print(overdue_header)
+        print(overdue_header, file=out_file)
         for task in sorted(overdue_tasks):
-            print(task)
-        print("")
+            print(task, file=out_file)
+        print("", file=out_file)
     elif len(due_tasks) > 0:
-        print(due_header)
+        print(due_header, file=out_file)
         for task in sorted(due_tasks):
-            print(task)
-        print("")
+            print(task, file=out_file)
+        print("", file=out_file)
     elif len(upcoming_tasks) > 0:
-        print(upcoming_header)
+        print(upcoming_header, file=out_file)
         for task in sorted(upcoming_tasks):
-            print(task)
-        print("")
+            print(task, file=out_file)
+        print("", file=out_file)
     elif len(undated_tasks) > 0:
-        print(undated_header)
+        print(undated_header, file=out_file)
         for task in sorted(undated_tasks):
-            print(task)
+            print(task, file=out_file)
+
+    if overwrite:
+        out_file.close()
 
 
 def run_cli():
@@ -85,11 +93,18 @@ def run_cli():
         default=1,
         help="The number of days ago when tasks were completed.",
     )
+    parser.add_argument(
+        "--overwrite",
+        default=False,
+        action="store_true",
+        help="Overwrite input ReDO file.",
+    )
 
     args = parser.parse_args()
     print_next_file(
         redo_file=args.redo_file,
         days_ago_when_tasks_were_completed=args.days_ago_when_tasks_were_completed,
+        overwrite=args.overwrite,
     )
 
 
@@ -151,7 +166,7 @@ class Task:
             return self.copy()
 
     def __str__(self) -> str:
-        return "\n".join(self.lines)
+        return "\n".join(["- " + self.lines[0]] + self.lines[1:])
 
     def __lt__(self, other: "Task") -> bool:
         return other.due_on is None or (
