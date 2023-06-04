@@ -23,7 +23,7 @@ def print_next_file(
 
     out_file = open(redo_file, mode="w") if overwrite else sys.stdout
 
-    today = datetime.datetime.today()
+    today = datetime.date.today()
     completed_on = today - datetime.timedelta(days=days_ago_when_tasks_were_completed)
 
     overdue_header = "# Overdue"
@@ -113,7 +113,7 @@ class Task:
     lines: List[str]
     has_been_completed: bool = False
     recurs_every: Optional[datetime.timedelta] = None
-    due_on: Optional[datetime.datetime] = None
+    due_on: Optional[datetime.date] = None
 
     def __init__(self, text: str) -> None:
         lines = text.splitlines()
@@ -140,19 +140,19 @@ class Task:
     def is_empty(self) -> bool:
         return len(self.lines) == 0
 
-    def is_upcoming(self, today: datetime.datetime) -> bool:
+    def is_upcoming(self, today: datetime.date) -> bool:
         return self.due_on is not None and today < self.due_on
 
-    def is_overdue(self, today: datetime.datetime) -> bool:
+    def is_overdue(self, today: datetime.date) -> bool:
         return self.due_on is not None and today > self.due_on
 
-    def is_due(self, today: datetime.datetime) -> bool:
+    def is_due(self, today: datetime.date) -> bool:
         return self.due_on is not None and today == self.due_on
 
     def copy(self) -> "Task":
         return Task(str(self))
 
-    def recurrence(self, current_date: Optional[datetime.datetime] = None) -> "Task":
+    def recurrence(self, current_date: Optional[datetime.date] = None) -> "Task":
         if self.has_been_completed:
             if self.due_on is None or self.recurs_every is None:
                 return Task("")
@@ -192,8 +192,10 @@ def each_task(text: str) -> Iterable[Task]:
             yield Task(task)
 
 
-def parse_date(month_day_year_string: str) -> datetime.datetime:
-    return datetime.datetime.strptime(month_day_year_string, MONTH_DAY_YEAR_DATE_FMT)
+def parse_date(month_day_year_string: str) -> datetime.date:
+    return datetime.datetime.strptime(
+        month_day_year_string, MONTH_DAY_YEAR_DATE_FMT
+    ).date()
 
 
 def parse_duration(duration_string: str) -> datetime.timedelta:
