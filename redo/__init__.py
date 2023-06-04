@@ -5,7 +5,7 @@ import re
 import sys
 
 
-TASK_REGEX = re.compile(r"(^|\r|\n|\r\n)[-*]\s")
+TASK_REGEX = re.compile(r"(^|\r|\n|\r\n)[-*]\s\[?\s*\]?")
 COMPLETION_REGEX = re.compile(r"^[-*]\s*(\[?x\]?)\s")
 RE_TAG_REGEX = re.compile(r"\+re:(\S+)")
 DUE_TAG_REGEX = re.compile(r"\+due:(\S+)")
@@ -166,7 +166,7 @@ class Task:
             return self.copy()
 
     def __str__(self) -> str:
-        return "\n".join(["- " + self.lines[0]] + self.lines[1:])
+        return "\n".join(["- [ ] " + self.lines[0]] + self.lines[1:])
 
     def __lt__(self, other: "Task") -> bool:
         return other.due_on is None or (
