@@ -11,7 +11,7 @@ def test_create_task_that_has_not_been_completed(task_marker: str) -> None:
     first_line = "first line of task"
     second_line = "second line of task"
     task_that_has_not_been_completed = redo.Task(
-        f"{task_marker}{first_line}\n{second_line}"
+        f"{task_marker}[ ] {first_line}\n{second_line}"
     )
 
     assert not task_that_has_not_been_completed.has_been_completed
@@ -38,7 +38,7 @@ def test_create_two_tasks(task_marker: str) -> None:
     third_line = "first line of second task"
     tasks = list(
         redo.each_task(
-            f"{task_marker}{first_line}\n{second_line}\n{task_marker}{third_line}"
+            f"{task_marker}[ ] {first_line}\n{second_line}\n{task_marker}[ ] {third_line}"
         )
     )
 
@@ -87,8 +87,8 @@ This is a block comment in a mock markdown file.
 ---
 
 # Upcoming
-- task 1
-* task 2
+- [ ] task 1
+* [] task 2
     additional information
 
 # About
@@ -107,9 +107,9 @@ This is a block comment in a mock markdown file.
 # Upcoming
 """
     )
-    assert parsed[1].text == "- task 1\n"
+    assert parsed[1].text == "- [ ] task 1\n"
     assert parsed[1].is_task
-    assert parsed[2].text == "* task 2\n    additional information\n"
+    assert parsed[2].text == "* [] task 2\n    additional information\n"
     assert not parsed[3].is_task
     assert (
         parsed[3].text
@@ -132,7 +132,7 @@ def test_task_next_recurrence_given_due_date() -> None:
 
 
 def test_task_recurrence_on_uncompleted_task() -> None:
-    task = redo.Task("- +re:1_day +due:may23_2023")
+    task = redo.Task("- [] +re:1_day +due:may23_2023")
     next_task = task.recurrence()
     assert next_task.lines == ["+re:1_day +due:may23_2023"]
     assert not next_task.has_been_completed
@@ -143,7 +143,7 @@ def test_task_recurrence_on_uncompleted_task() -> None:
 
 
 def test_task_recurrence_on_uncompleted_task_without_due_date() -> None:
-    task = redo.Task("- +re:1_day")
+    task = redo.Task("- [] +re:1_day")
     next_task = task.recurrence()
     assert next_task.lines == ["+re:1_day"]
     assert not next_task.has_been_completed
@@ -207,3 +207,26 @@ def test_sort_tasks() -> None:
     assert sorted_tasks[1] == tasks[-2]
     assert sorted_tasks[2] == tasks[-3]
     assert sorted_tasks[-1] == tasks[0]
+
+
+def test_multiline_task_parsing() -> None:
+    text = """
+- [ ] write script to update reDO files @home
+    - find all task lines that start with `[-*]` and associate each non-empty line in between with the previous task
+    - split on whitespace
+    - check if it's been completed (matches an `x`) or not
+    - find all tags (words starting with `+`)
+    - find the first `re` tag (print a warning if there is more than one) and parse its value
+    - find the first `due` tag (print a warning if there is more than one) and parse its value
+- [x] get foam insulation board for AC @farm? @home_depot? @rona?
+- [x] install AC unit @home
+"""
+    task_blocks = list(redo.each_text_block(text))
+    assert len(task_blocks) == 4
+    assert task_blocks[0].text == "\n"
+    assert not task_blocks[0].is_task
+    assert all(task.is_task for task in task_blocks[1:])
+
+    uncompleted_task = redo.Task(task_blocks[1].text)
+    assert not uncompleted_task.has_been_completed
+    assert str(uncompleted_task.recurrence()) == str(uncompleted_task)

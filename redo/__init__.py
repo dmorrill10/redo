@@ -5,7 +5,7 @@ import re
 import sys
 
 
-TASK_REGEX = re.compile(r"(^|\r|\n|\r\n)[-*]\s\[?\s*\]?")
+TASK_REGEX = re.compile(r"(^|\r|\n|\r\n)[-*]\s*\[\s*\]\s")
 COMPLETION_REGEX = re.compile(r"^[-*]\s*(\[?x\]?)\s")
 RE_TAG_REGEX = re.compile(r"\+re:(\S+)")
 DUE_TAG_REGEX = re.compile(r"\+due:(\S+)")
@@ -43,6 +43,7 @@ def print_next_file(
     for text_block in each_text_block(text):
         if text_block.is_task:
             task = Task(text_block.text).recurrence(completed_on)
+
             if task.is_empty():
                 continue
             elif task.is_overdue(today):
@@ -65,17 +66,17 @@ def print_next_file(
         for task in sorted(overdue_tasks):
             print(task, file=out_file)
         print("", file=out_file)
-    elif len(due_tasks) > 0:
+    if len(due_tasks) > 0:
         print(due_header, file=out_file)
         for task in sorted(due_tasks):
             print(task, file=out_file)
         print("", file=out_file)
-    elif len(upcoming_tasks) > 0:
+    if len(upcoming_tasks) > 0:
         print(upcoming_header, file=out_file)
         for task in sorted(upcoming_tasks):
             print(task, file=out_file)
         print("", file=out_file)
-    elif len(undated_tasks) > 0:
+    if len(undated_tasks) > 0:
         print(undated_header, file=out_file)
         for task in sorted(undated_tasks):
             print(task, file=out_file)
@@ -85,7 +86,7 @@ def print_next_file(
 
 
 def run_cli():
-    parser = argparse.ArgumentParser(description="Say hi.")
+    parser = argparse.ArgumentParser()
     parser.add_argument("--redo-file", type=str, help="ReDO file to update.")
     parser.add_argument(
         "--days_ago_when_tasks_were_completed",
@@ -149,7 +150,7 @@ class Task:
         return self.due_on is not None and today == self.due_on
 
     def copy(self) -> "Task":
-        return Task("- " + "\n".join(self.lines))
+        return Task(str(self))
 
     def recurrence(self, current_date: Optional[datetime.datetime] = None) -> "Task":
         if self.has_been_completed:
@@ -161,12 +162,17 @@ class Task:
                 f"+due:{next_due.strftime(MONTH_DAY_YEAR_DATE_FMT).lower()}",
                 "\n".join(self.lines),
             )
-            return Task(f"- {next_due_date_str}")
+            return Task(f"- [ ] {next_due_date_str}")
         else:
             return self.copy()
 
     def __str__(self) -> str:
-        return "\n".join(["- [ ] " + self.lines[0]] + self.lines[1:])
+        if self.is_empty():
+            return ""
+        completion_str = "[x]" if self.has_been_completed else "[ ]"
+        first_line = f"- {completion_str} " + self.lines[0]
+        lines = [first_line] + (self.lines[1:] if len(self.lines) > 1 else [])
+        return "\n".join(lines)
 
     def __lt__(self, other: "Task") -> bool:
         if other.due_on is None:
@@ -206,7 +212,7 @@ def each_text_block(text: str) -> Iterable[TextBlock]:
     s = ""
     is_task = False
     for line in text.splitlines(keepends=True):
-        if TASK_REGEX.match(line):
+        if TASK_REGEX.match(line) or COMPLETION_REGEX.match(line):
             if len(s) > 0:
                 yield TextBlock(s, is_task)
             s = line
