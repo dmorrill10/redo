@@ -169,9 +169,14 @@ class Task:
         return "\n".join(["- [ ] " + self.lines[0]] + self.lines[1:])
 
     def __lt__(self, other: "Task") -> bool:
-        return other.due_on is None or (
-            self.due_on is not None and self.due_on < other.due_on
-        )
+        if other.due_on is None:
+            if self.due_on is None:
+                return self.lines < other.lines
+            return True
+        elif self.due_on is None or self.due_on == other.due_on:
+            return self.lines < other.lines
+        else:
+            return self.due_on < other.due_on
 
 
 def each_task(text: str) -> Iterable[Task]:
