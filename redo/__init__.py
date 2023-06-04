@@ -12,21 +12,68 @@ DUE_TAG_REGEX = re.compile(r"\+due:(\S+)")
 MONTH_DAY_YEAR_DATE_FMT = "%b%d_%Y"
 
 
-def update_file(redo_file: str, days_ago_when_tasks_were_completed: int = 1) -> None:
+def print_next_file(
+    redo_file: str, days_ago_when_tasks_were_completed: int = 1
+) -> None:
     with open(redo_file) as f:
         text = f.read()
 
-    completed_on = datetime.datetime.today() - datetime.timedelta(
-        days=days_ago_when_tasks_were_completed
-    )
-    # TODO: update overdue, due, upcoming sections
+    today = datetime.datetime.today()
+    completed_on = today - datetime.timedelta(days=days_ago_when_tasks_were_completed)
+
+    overdue_header = "# Overdue"
+    overdue_tasks = []
+
+    due_header = "# Due"
+    due_tasks = []
+
+    upcoming_header = "# Upcoming"
+    upcoming_tasks = []
+
+    undated_header = "# Undated"
+    undated_tasks = []
+
+    set_of_headers = set([overdue_header, due_header, upcoming_header, undated_header])
+
     for text_block in each_text_block(text):
         if text_block.is_task:
             task = Task(text_block.text).recurrence(completed_on)
-            if not task.is_empty():
-                print("\n".join(task.lines))
+            if task.is_empty():
+                continue
+            elif task.is_overdue(today):
+                overdue_tasks.append(task)
+            elif task.is_due(today):
+                due_tasks.append(task)
+            elif task.is_upcoming(today):
+                upcoming_tasks.append(task)
+            else:
+                undated_tasks.append(task)
+            continue
         else:
-            print(text_block.text)
+            for line in text_block.text.splitlines():
+                if len(line) > 0 and line not in set_of_headers:
+                    print(line)
+
+    print("")
+    if len(overdue_tasks) > 0:
+        print(overdue_header)
+        for task in sorted(overdue_tasks):
+            print(task)
+        print("")
+    elif len(due_tasks) > 0:
+        print(due_header)
+        for task in sorted(due_tasks):
+            print(task)
+        print("")
+    elif len(upcoming_tasks) > 0:
+        print(upcoming_header)
+        for task in sorted(upcoming_tasks):
+            print(task)
+        print("")
+    elif len(undated_tasks) > 0:
+        print(undated_header)
+        for task in sorted(undated_tasks):
+            print(task)
 
 
 def run_cli():
@@ -40,7 +87,7 @@ def run_cli():
     )
 
     args = parser.parse_args()
-    update_file(
+    print_next_file(
         redo_file=args.redo_file,
         days_ago_when_tasks_were_completed=args.days_ago_when_tasks_were_completed,
     )
