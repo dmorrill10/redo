@@ -192,3 +192,18 @@ def test_task_is_overdue() -> None:
     assert not task.is_upcoming(today=today)
     assert task.is_overdue(today=today)
     assert not task.is_due(today=today)
+
+
+def test_sort_tasks() -> None:
+    tasks = [
+        redo.Task("- [ ] d"),  # Undated
+        redo.Task("- [ ] a +re:1_day +due:may25_2023"),  # Upcoming
+        redo.Task("- [ ] b +re:1_day +due:may24_2023"),  # Due
+        redo.Task("- [ ] c +re:1_day +due:may23_2023"),  # Overdue
+    ]
+    # Sorts by due date, with undated last
+    sorted_tasks = sorted(tasks)
+    assert sorted_tasks[0] == tasks[-1]
+    assert sorted_tasks[1] == tasks[-2]
+    assert sorted_tasks[2] == tasks[-3]
+    assert sorted_tasks[-1] == tasks[0]

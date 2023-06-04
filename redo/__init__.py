@@ -103,6 +103,14 @@ class Task:
         else:
             return self.copy()
 
+    def __str__(self) -> str:
+        return "\n".join(self.lines)
+
+    def __lt__(self, other: "Task") -> bool:
+        return other.due_on is None or (
+            self.due_on is not None and self.due_on < other.due_on
+        )
+
 
 def each_task(text: str) -> Iterable[Task]:
     for task in TASK_REGEX.split(text):
