@@ -168,3 +168,27 @@ def test_task_next_recurrence_given_due_date_and_current_date() -> None:
     assert next_task.recurs_every.days == 1
     assert next_task.due_on is not None
     assert next_task.due_on.timetuple()[:3] == (2023, 5, 26)
+
+
+def test_task_is_due() -> None:
+    task = redo.Task("- [ ] +re:1_day +due:may23_2023")
+    today = datetime.datetime(year=2023, month=5, day=23)
+    assert not task.is_upcoming(today=today)
+    assert not task.is_overdue(today=today)
+    assert task.is_due(today=today)
+
+
+def test_task_is_upcoming() -> None:
+    task = redo.Task("- [ ] +re:1_day +due:may23_2023")
+    today = datetime.datetime(year=2023, month=5, day=22)
+    assert task.is_upcoming(today=today)
+    assert not task.is_overdue(today=today)
+    assert not task.is_due(today=today)
+
+
+def test_task_is_overdue() -> None:
+    task = redo.Task("- [ ] +re:1_day +due:may23_2023")
+    today = datetime.datetime(year=2023, month=5, day=24)
+    assert not task.is_upcoming(today=today)
+    assert task.is_overdue(today=today)
+    assert not task.is_due(today=today)

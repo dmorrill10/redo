@@ -77,6 +77,15 @@ class Task:
     def is_empty(self) -> bool:
         return len(self.lines) == 0
 
+    def is_upcoming(self, today: datetime.datetime) -> bool:
+        return self.due_on is not None and today < self.due_on
+
+    def is_overdue(self, today: datetime.datetime) -> bool:
+        return self.due_on is not None and today > self.due_on
+
+    def is_due(self, today: datetime.datetime) -> bool:
+        return self.due_on is not None and today == self.due_on
+
     def copy(self) -> "Task":
         return Task("- " + "\n".join(self.lines))
 
