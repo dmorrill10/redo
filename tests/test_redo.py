@@ -6,11 +6,27 @@ import redo
 TASK_MARKERS = ["- ", "* "]
 
 
+def test_skip_old_due_dates() -> None:
+    task = redo.Task("- [X] task +due:sep1_2023 +re:1_day")
+    assert task.has_been_completed
+
+    next_task = task.recurrence(
+        datetime.date(year=2023, month=9, day=9),
+        skip_old_due_dates=True,
+    )
+    assert not next_task.has_been_completed
+    assert next_task.due_on is not None
+    assert next_task.due_on.timetuple()[:3] == (2023, 9, 10)
+
+
 def test_big_X_means_completed_on_due_date() -> None:
     task = redo.Task("- [X] task +due:sep5_2023 +re:2_days")
     assert task.has_been_completed
 
-    next_task = task.recurrence(datetime.date(year=2023, month=9, day=9))
+    next_task = task.recurrence(
+        datetime.date(year=2023, month=9, day=9),
+        skip_old_due_dates=False,
+    )
     assert not next_task.has_been_completed
     assert next_task.due_on is not None
     assert next_task.due_on.timetuple()[:3] == (2023, 9, 7)
