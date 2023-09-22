@@ -6,7 +6,7 @@ import sys
 
 
 TASK_REGEX = re.compile(r"(^|\r|\n|\r\n)[-*]\s*\[\s*\]\s")
-COMPLETION_REGEX = re.compile(r"^[-*]\s*(\[?x\]?)\s")
+COMPLETION_REGEX = re.compile(r"^[-*]\s*(\[?[xX]\]?)\s")
 RE_TAG_REGEX = re.compile(r"\+re:(\S+)")
 DUE_TAG_REGEX = re.compile(r"\+due:(\S+)")
 
@@ -114,6 +114,7 @@ class Task:
     has_been_completed: bool = False
     recurs_every: Optional[datetime.timedelta] = None
     due_on: Optional[datetime.date] = None
+    completed_on_due_date: bool = False
 
     def __init__(self, text: str) -> None:
         lines = text.splitlines()
@@ -121,8 +122,10 @@ class Task:
         if len(lines) == 0:
             return
 
-        match = COMPLETION_REGEX.search(lines[0])
-        has_been_completed = bool(match and match.group(1))
+        completion_regex_match = COMPLETION_REGEX.search(lines[0])
+        has_been_completed = bool(
+            completion_regex_match and completion_regex_match.group(1)
+        )
         self.has_been_completed = has_been_completed
 
         # Remove extra stuff from task text
@@ -136,6 +139,10 @@ class Task:
         match = DUE_TAG_REGEX.search(text)
         if match and match.group(1):
             self.due_on = parse_date(match.group(1))
+        if self.due_on is not None and bool(
+            completion_regex_match and completion_regex_match.group(1) == "[X]"
+        ):
+            self.completed_on_due_date = True
 
     def is_empty(self) -> bool:
         return len(self.lines) == 0
@@ -156,7 +163,11 @@ class Task:
         if self.has_been_completed:
             if self.due_on is None or self.recurs_every is None:
                 return Task("")
-            completion_date = self.due_on if current_date is None else current_date
+            completion_date = (
+                self.due_on
+                if current_date is None or self.completed_on_due_date
+                else current_date
+            )
             next_due = completion_date + self.recurs_every
             next_due_date_str = DUE_TAG_REGEX.sub(
                 f"+due:{next_due.strftime(MONTH_DAY_YEAR_DATE_FMT).lower()}",

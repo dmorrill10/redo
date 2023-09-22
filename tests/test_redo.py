@@ -6,6 +6,16 @@ import redo
 TASK_MARKERS = ["- ", "* "]
 
 
+def test_big_X_means_completed_on_due_date() -> None:
+    task = redo.Task("- [X] task +due:sep5_2023 +re:2_days")
+    assert task.has_been_completed
+
+    next_task = task.recurrence(datetime.date(year=2023, month=9, day=9))
+    assert not next_task.has_been_completed
+    assert next_task.due_on is not None
+    assert next_task.due_on.timetuple()[:3] == (2023, 9, 7)
+
+
 @pytest.mark.parametrize("task_marker", TASK_MARKERS)
 def test_create_task_that_has_not_been_completed(task_marker: str) -> None:
     first_line = "first line of task"
